@@ -5,10 +5,13 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 40000
 
 const default_file = {}
 
-
-function testExecute(testing_name: string, testing_method: Function, validating_method: Function, params?: any) {
+function testExecute(testing_name: string, testing_method: Function, validating_method: Function, ...args: any[]) {
     test(testing_name, done => {
-        testing_method(params, validating_method(done));
+        if (args.length > 0) {
+          testing_method(...args, validating_method(done));
+        } else {
+          testing_method(validating_method(done));
+        }
     });
 }
 
@@ -36,10 +39,13 @@ function compareResults(output_file, done) {
     });
 }
 
+
 testExecute(`default`, calcNotation, fileValidation, {});
+const files_to_test = [`best_case.csv`, `worst_case.csv`, `invalid_references.csv`, `empty.csv`, `only_columns.csv`, `only_rows.csv`, `big_file.csv`]
 
-testExecute(`best case`, calcNotation, fileValidation, {file_name: `best_case.csv`});
+for (let file_name of files_to_test){
+    testExecute(`file ${file_name}`, calcNotation, fileValidation, {file_name});
+}
 
-testExecute(`worst case`, calcNotation, fileValidation, {file_name: `worst_case.csv`});
 
 

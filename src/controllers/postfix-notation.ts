@@ -17,8 +17,8 @@ const err_message = "#ERR"
 export const mapFileToTable = ({path, try_calc= true}: {path: string, try_calc?: boolean}, done: DefaultResultCallback) => {
     let content_table = {}
     const instream = fs.createReadStream(path);
-    const outstream = process.stdout;
-    const rl = readline.createInterface({input: instream, output: outstream});
+    // const outstream = process.stdout;
+    const rl = readline.createInterface({input: instream});
 
     rl.on("line", (line)=> {
         let index = 0
@@ -125,7 +125,7 @@ const postfixCalculator = (expression: string) => {
 // replace the cells with other cells references and calculate its notation
 const replaceAndCalculate = (table: any, done: DefaultResultCallback) =>{
     if (Object.keys(table).length<=0){
-        return {}
+        return done(undefined, {})
     }
     let iteration = 0
     const max_iterations = (Object.keys(table).length * table[letters[0]].length) - 1 // loading the file I run 1 iteration
@@ -149,7 +149,9 @@ const replaceAndCalculate = (table: any, done: DefaultResultCallback) =>{
                                     new_cel.push(table[letter][position]);
                                 }
                                 else{
-                                    new_cel.push(value); // if last iteration fill with error
+                                    const last_iteration = (iteration+1 === max_iterations);
+                                    const is_invalid = isNaN(value)
+                                    new_cel.push((last_iteration && is_invalid) ? err_message : value);
                                 }
                             }
                             else{
@@ -158,7 +160,11 @@ const replaceAndCalculate = (table: any, done: DefaultResultCallback) =>{
                         }
                     }
                     if (new_cel.length > 0){
-                        table[col][index] = tryCalculate(new_cel.join(" "));
+                        if (new_cel.join("").indexOf(err_message) > -1){
+                            table[col][index] = err_message
+                        }else{
+                            table[col][index] = tryCalculate(new_cel.join(" "));
+                        }
                     }
                 }
                 index++;
@@ -187,7 +193,7 @@ export const calcNotation = (input: Iinput, done: DefaultResultCallback) => {
             let stream = fs.createWriteStream(output_file);
             
             stream.once('open', function(fd) {
-                const max_rows = new_table[letters[0]].length
+                const max_rows = (new_table[letters[0]]) ? new_table[letters[0]].length : 0;
                 let index = 0;
                 while (index < max_rows){
                     let row = [];
