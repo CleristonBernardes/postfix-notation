@@ -1,5 +1,6 @@
-# postfix-notation
-Calculates the postfix notation for spreadsheets considering its reference to different cells
+# Postfix Notation
+Calculates the postfix notation for spreadsheets considering its reference to different cells.
+
 Expects a csv input file
 
 

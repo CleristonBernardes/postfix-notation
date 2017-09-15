@@ -188,7 +188,9 @@ export const calcNotation = (input: Iinput, done: DefaultResultCallback) => {
     }
 
     mapFileToTable(file, (err: any, table: any)=>{
+        if (err) {return done(err);}
         replaceAndCalculate(table, (err: any, new_table: any)=>{
+            if (err) {return done(err);}
             const output_file = `${__dirname}/../STDOUT/${path.basename(file)}`
             let stream = fs.createWriteStream(output_file);
             
