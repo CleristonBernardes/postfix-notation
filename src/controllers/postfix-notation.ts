@@ -1,18 +1,20 @@
 import * as fs from "fs"
 import * as readline from "readline"
 import * as stream from "stream"
-
+import * as path from "path"
 
 
 interface Iinput {
-    content?: string;
-    fileName?: string;
+    file_path?: string;
+    file_name?: string;
 }
 
+// limiting the columns to alphabet size
 const letters = "abcdefghijklmnopqrstuvwxyz".split("");
 const err_message = "#ERR"
 
-const mapFileToTable = (path: string, done: DefaultResultCallback) => {
+// map the csv into a table object
+export const mapFileToTable = ({path, try_calc= true}: {path: string, try_calc?: boolean}, done: DefaultResultCallback) => {
     let content_table = {}
     const instream = fs.createReadStream(path);
     const outstream = process.stdout;
@@ -25,18 +27,17 @@ const mapFileToTable = (path: string, done: DefaultResultCallback) => {
                 content_table[letters[index]] = []
             }
             content_table[letters[index]].push(tryCalculate(col));
-
             index++;
         }
     });
     
     rl.on("close", function() {
-        console.log("content_table", content_table);
         done(undefined, content_table);
     });
    
 }
 
+// try calculate e validate if its a valid return
 const tryCalculate = (expression: string) =>{
     const try_calc = postfixCalculator(expression);
     if (try_calc === err_message){
@@ -48,6 +49,7 @@ const tryCalculate = (expression: string) =>{
     return try_calc
 }
 
+// function to calculate postfix notation
 const postfixCalculator = (expression: string) => {
 
     const no_space_expression = expression.trim();
@@ -120,6 +122,7 @@ const postfixCalculator = (expression: string) => {
     return result.toString();
 }
 
+// replace the cells with other cells references and calculate its notation
 const replaceAndCalculate = (table: any, done: DefaultResultCallback) =>{
     if (Object.keys(table).length<=0){
         return {}
@@ -144,7 +147,6 @@ const replaceAndCalculate = (table: any, done: DefaultResultCallback) =>{
                                 
                                 if (letter && table[value.charAt(0)] && (position || position === 0) && table[letter][position] && !isNaN(Number(table[letter][position]))){
                                     new_cel.push(table[letter][position]);
-                                    iteration++;
                                 }
                                 else{
                                     new_cel.push(value); // if last iteration fill with error
@@ -164,17 +166,43 @@ const replaceAndCalculate = (table: any, done: DefaultResultCallback) =>{
         }
         iteration++;
     }
-    console.log("new table", JSON.stringify(table));
-    done(null, table);
+    done(undefined, table);
 }
 
+//calculates the notation from csv file
 export const calcNotation = (input: Iinput, done: DefaultResultCallback) => {
-    const {content, fileName} = input
+    const {file_path, file_name} = input
 
-    mapFileToTable(`${__dirname}/input.csv`, (err: any, table: any)=>{
-        replaceAndCalculate(table, done);
+    let file = `${__dirname}/../STDIN/input.csv`
+
+    if (file_path) {
+        file = file_path;
+    } else if (file_name){
+        file = `${__dirname}/../STDIN/${file_name}`
+    }
+
+    mapFileToTable({path: file}, (err: any, table: any)=>{
+        replaceAndCalculate(table, (err: any, new_table: any)=>{
+            const output_file = `${__dirname}/../STDOUT/${path.basename(file)}`
+            let stream = fs.createWriteStream(output_file);
+            
+            stream.once('open', function(fd) {
+                const max_rows = new_table[letters[0]].length
+                let index = 0;
+                while (index < max_rows){
+                    let row = [];
+                    for (let col in new_table){
+                        if (table[col][index]){
+                            row.push(table[col][index]);
+                        }
+                    }
+                    stream.write(`${index > 0 ? "\n":""}${row.join(",")}`);
+                    index++;
+                }
+              stream.end();
+              done(undefined, {output_file, new_table});
+            });
+        });
     });
 
 }
-
-

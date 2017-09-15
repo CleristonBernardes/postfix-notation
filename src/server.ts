@@ -16,7 +16,7 @@ app.use((req, res, next) => {
  next();
 });
 
-// app.use('/', MainRouters);
+// app.use('/', "");
 
 /**
  * Start Express server.
