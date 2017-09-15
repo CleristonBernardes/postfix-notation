@@ -37,6 +37,7 @@ node_modules/
 jspm_packages/
 dist/
 test/tmp/
+test-report.xml
 
 # Typescript v1 declaration files
 typings/

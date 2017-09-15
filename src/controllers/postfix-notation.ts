@@ -14,7 +14,7 @@ const letters = "abcdefghijklmnopqrstuvwxyz".split("");
 const err_message = "#ERR"
 
 // map the csv into a table object
-export const mapFileToTable = ({path, try_calc= true}: {path: string, try_calc?: boolean}, done: DefaultResultCallback) => {
+export const mapFileToTable = (path: string, done: DefaultResultCallback) => {
     let content_table = {}
     const instream = fs.createReadStream(path);
     // const outstream = process.stdout;
@@ -187,7 +187,7 @@ export const calcNotation = (input: Iinput, done: DefaultResultCallback) => {
         file = `${__dirname}/../STDIN/${file_name}`
     }
 
-    mapFileToTable({path: file}, (err: any, table: any)=>{
+    mapFileToTable(file, (err: any, table: any)=>{
         replaceAndCalculate(table, (err: any, new_table: any)=>{
             const output_file = `${__dirname}/../STDOUT/${path.basename(file)}`
             let stream = fs.createWriteStream(output_file);
