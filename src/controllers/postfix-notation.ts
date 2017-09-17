@@ -128,11 +128,19 @@ const replaceAndCalculate = (table: any, done: DefaultResultCallback) =>{
         return done(undefined, {})
     }
     let iteration = 0
-    const max_iterations = (Object.keys(table).length * table[letters[0]].length) - 1 // loading the file I run 1 iteration
-    while (iteration < max_iterations){
+    const qtd_cells = Object.keys(table).length * table[letters[0]].length;
+    while (iteration < (qtd_cells-1)){ // loading the file, run 1 iteration
+        let qtd_fixed = 0;
         for (let col in table){
             let index = 0;
             for (let cel of table[col]){
+                if (cel.indexOf(err_message) > -1 || !isNaN(Number(cel))){
+                    qtd_fixed++;
+                    if (qtd_fixed === qtd_cells) {
+                        return done(undefined, table);
+                    }
+                }
+
                 if (cel.indexOf(err_message) > -1){
                     table[col][index] = err_message;
                 }
@@ -149,7 +157,7 @@ const replaceAndCalculate = (table: any, done: DefaultResultCallback) =>{
                                     new_cel.push(table[letter][position]);
                                 }
                                 else{
-                                    const last_iteration = (iteration+1 === max_iterations);
+                                    const last_iteration = (iteration+2 === qtd_cells);
                                     const is_invalid = isNaN(value)
                                     new_cel.push((last_iteration && is_invalid) ? err_message : value);
                                 }
